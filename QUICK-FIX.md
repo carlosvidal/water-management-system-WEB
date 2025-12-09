@@ -1,12 +1,23 @@
 # 🚀 Solución Rápida - Frontend (Web)
 
-## Problema Actual
+## Problemas Resueltos
 
+### 1. ❌ package-lock.json no encontrado
 ```
 npm error The `npm ci` command can only install with an existing package-lock.json
 ```
 
-## ✅ Solución Implementada
+### 2. ❌ Errores de TypeScript durante el build
+```
+error TS2339: Property 'city' does not exist on type 'Condominium'
+```
+
+### 3. ❌ Health check fallando
+```
+wget: can't connect to remote host: Connection refused
+```
+
+## ✅ Soluciones Implementadas
 
 ### 1. Archivo `.dockerignore` Corregido
 
