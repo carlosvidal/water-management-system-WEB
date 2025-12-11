@@ -158,8 +158,59 @@ export const useAuthStore = defineStore('auth', () => {
   function canView(condominiumId?: string): boolean {
     if (isSuperAdmin.value) return true
     if (!condominiumId) return false
-    
+
     return hasRole(condominiumId, ['ADMIN', 'ANALYST', 'EDITOR'])
+  }
+
+  // New permission helpers for role-based access control
+
+  function canCreateReadings(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN', 'EDITOR'])
+  }
+
+  function canManageUnits(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN', 'EDITOR'])
+  }
+
+  function canManageResidents(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN', 'EDITOR'])
+  }
+
+  function canValidateReadings(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN'])
+  }
+
+  function canManagePeriods(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN'])
+  }
+
+  function canManageBills(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN'])
+  }
+
+  function isReadOnly(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return false
+    if (!condominiumId) return true
+
+    return hasRole(condominiumId, ['ANALYST'])
   }
 
   function clearError(): void {
@@ -174,13 +225,13 @@ export const useAuthStore = defineStore('auth', () => {
     condominiumAccess,
     loading,
     error,
-    
+
     // Getters
     isAuthenticated,
     isSuperAdmin,
     isAdmin,
     userRole,
-    
+
     // Actions
     login,
     logout,
@@ -191,6 +242,16 @@ export const useAuthStore = defineStore('auth', () => {
     hasRole,
     canEdit,
     canView,
+
+    // Permission helpers
+    canCreateReadings,
+    canManageUnits,
+    canManageResidents,
+    canValidateReadings,
+    canManagePeriods,
+    canManageBills,
+    isReadOnly,
+
     clearError,
   }
 })

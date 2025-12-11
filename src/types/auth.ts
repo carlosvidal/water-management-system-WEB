@@ -30,4 +30,4 @@ export interface CondominiumAccess {
   }
 }
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'ANALYST' | 'EDITOR' | 'RESIDENT'
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'ANALYST' | 'EDITOR'
