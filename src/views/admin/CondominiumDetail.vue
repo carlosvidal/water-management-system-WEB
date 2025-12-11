@@ -119,6 +119,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Bloques</h3>
                 <button
+                  v-if="authStore.canEdit(condominiumId.value)"
                   @click="showCreateBlockModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -153,6 +154,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Unidades</h3>
                 <button
+                  v-if="authStore.canManageUnits(condominiumId.value)"
                   @click="showCreateUnitModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -226,6 +228,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Residentes</h3>
                 <button
+                  v-if="authStore.canManageResidents(condominiumId.value)"
                   @click="showCreateResidentModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -264,6 +267,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Períodos de Facturación</h3>
                 <button
+                  v-if="authStore.canManagePeriods(condominiumId.value)"
                   @click="showCreatePeriodModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >

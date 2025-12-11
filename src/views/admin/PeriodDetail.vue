@@ -102,6 +102,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Acciones</h3>
                 <div class="space-y-2">
                   <button
+                    v-if="authStore.canCreateReadings(condominiumId.value)"
                     @click="showCreateReadingModal = true"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                   >
@@ -109,6 +110,7 @@
                     Nueva Lectura
                   </button>
                   <button
+                    v-if="authStore.canManageBills(condominiumId.value)"
                     @click="calculateBilling"
                     :disabled="period.status === 'CLOSED'"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
