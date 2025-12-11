@@ -743,10 +743,10 @@ const showCreatePeriodModal = ref(false)
 
 const tabs = [
   { id: 'periods', name: 'Períodos' },
-  { id: 'users', name: 'Usuarios' },
   { id: 'residents', name: 'Residentes' },
   { id: 'units', name: 'Unidades' },
   { id: 'blocks', name: 'Bloques' },
+  { id: 'users', name: 'Usuarios' },
 ]
 
 const newBlock = reactive({
