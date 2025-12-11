@@ -428,6 +428,17 @@ class ApiClient {
     const response = await this.instance.get(`/bills/condominium/${condominiumId}/summary`, { params })
     return response.data
   }
+
+  // Condominium user management
+  async getCondominiumUsers(condominiumId: string) {
+    const response = await this.instance.get(`/condominiums/${condominiumId}/users`)
+    return response.data
+  }
+
+  async createCondominiumUser(condominiumId: string, data: any) {
+    const response = await this.instance.post(`/condominiums/${condominiumId}/users`, data)
+    return response.data
+  }
 }
 
 export const apiClient = new ApiClient()

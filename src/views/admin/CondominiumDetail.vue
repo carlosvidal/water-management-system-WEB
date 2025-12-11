@@ -236,13 +236,13 @@
                   Nuevo Residente
                 </button>
               </div>
-              
+
               <div v-if="condominiumStore.residents.length === 0" class="text-center py-8">
                 <UsersIcon class="mx-auto h-12 w-12 text-gray-400" />
                 <h3 class="mt-2 text-sm font-medium text-gray-900">No hay residentes</h3>
                 <p class="mt-1 text-sm text-gray-500">Comienza registrando el primer residente.</p>
               </div>
-              
+
               <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
                   v-for="resident in condominiumStore.residents"
@@ -259,6 +259,80 @@
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div v-if="activeTab === 'users'">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Usuarios del Condominio</h3>
+                <button
+                  v-if="authStore.canManageUsers(condominiumId.value)"
+                  @click="showCreateUserModal = true"
+                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
+                >
+                  <PlusIcon class="h-4 w-4 mr-2" />
+                  Nuevo Usuario
+                </button>
+              </div>
+
+              <div v-if="condominiumStore.users.length === 0" class="text-center py-8">
+                <UsersIcon class="mx-auto h-12 w-12 text-gray-400" />
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No hay usuarios</h3>
+                <p class="mt-1 text-sm text-gray-500">Comienza creando el primer usuario.</p>
+              </div>
+
+              <div v-else class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-300">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nombre
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Teléfono
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rol
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr v-for="condoUser in condominiumStore.users" :key="condoUser.id">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ condoUser.user.name }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ condoUser.user.email }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ condoUser.user.phone || '-' }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span :class="[
+                          getRoleColor(condoUser.role),
+                          'inline-flex px-2 py-1 text-xs font-semibold rounded-full'
+                        ]">
+                          {{ getRoleName(condoUser.role) }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span :class="[
+                          condoUser.user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
+                          'inline-flex px-2 py-1 text-xs font-semibold rounded-full'
+                        ]">
+                          {{ condoUser.user.isActive ? 'Activo' : 'Inactivo' }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -497,6 +571,86 @@
       </div>
     </div>
 
+    <!-- Create User Modal -->
+    <div
+      v-if="showCreateUserModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Usuario</h3>
+          <form @submit.prevent="createUser">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  v-model="newUser.name"
+                  type="text"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  v-model="newUser.email"
+                  type="email"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <input
+                  v-model="newUser.password"
+                  type="password"
+                  required
+                  minlength="8"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                <input
+                  v-model="newUser.phone"
+                  type="tel"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Rol</label>
+                <select
+                  v-model="newUser.role"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                >
+                  <option value="ADMIN">Administrador</option>
+                  <option value="EDITOR">Editor</option>
+                  <option value="ANALYST">Lector</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                @click="showCreateUserModal = false"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="condominiumStore.loading"
+                class="px-4 py-2 text-sm font-medium text-white bg-water-600 hover:bg-water-700 rounded-md disabled:opacity-50"
+              >
+                {{ condominiumStore.loading ? 'Creando...' : 'Crear' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Create Period Modal -->
     <div
       v-if="showCreatePeriodModal"
@@ -584,12 +738,14 @@ const activeTab = ref('blocks')
 const showCreateBlockModal = ref(false)
 const showCreateUnitModal = ref(false)
 const showCreateResidentModal = ref(false)
+const showCreateUserModal = ref(false)
 const showCreatePeriodModal = ref(false)
 
 const tabs = [
   { id: 'blocks', name: 'Bloques' },
   { id: 'units', name: 'Unidades' },
   { id: 'residents', name: 'Residentes' },
+  { id: 'users', name: 'Usuarios' },
   { id: 'periods', name: 'Períodos' },
 ]
 
@@ -611,6 +767,14 @@ const newResident = reactive({
   document: '',
 })
 
+const newUser = reactive({
+  name: '',
+  email: '',
+  password: '',
+  phone: '',
+  role: 'ANALYST',
+})
+
 const newPeriod = reactive({
   name: '',
   startDate: '',
@@ -624,6 +788,7 @@ async function loadCondominiumData() {
       condominiumStore.fetchBlocks(condominiumId.value),
       condominiumStore.fetchUnits(condominiumId.value),
       condominiumStore.fetchResidents(condominiumId.value),
+      condominiumStore.fetchUsers(condominiumId.value),
       condominiumStore.fetchPeriods(condominiumId.value),
     ])
   } catch (error) {
@@ -665,22 +830,60 @@ async function createUnit() {
 async function createResident() {
   try {
     await condominiumStore.createResident(condominiumId.value, newResident)
-    
+
     Object.assign(newResident, {
       name: '',
       email: '',
       phone: '',
       document: '',
     })
-    
+
     showCreateResidentModal.value = false
   } catch (error) {
     console.error('Error creating resident:', error)
   }
 }
 
+async function createUser() {
+  try {
+    await condominiumStore.createUser(condominiumId.value, newUser)
+
+    Object.assign(newUser, {
+      name: '',
+      email: '',
+      password: '',
+      phone: '',
+      role: 'ANALYST',
+    })
+
+    showCreateUserModal.value = false
+  } catch (error) {
+    console.error('Error creating user:', error)
+  }
+}
+
 function selectUnitForResident(unit: any) {
   console.log('Select resident for unit:', unit)
+}
+
+function getRoleName(role: string): string {
+  const roleNames: Record<string, string> = {
+    'SUPER_ADMIN': 'Super Admin',
+    'ADMIN': 'Administrador',
+    'EDITOR': 'Editor',
+    'ANALYST': 'Lector',
+  }
+  return roleNames[role] || role
+}
+
+function getRoleColor(role: string): string {
+  const colors: Record<string, string> = {
+    'SUPER_ADMIN': 'bg-purple-100 text-purple-800',
+    'ADMIN': 'bg-blue-100 text-blue-800',
+    'EDITOR': 'bg-green-100 text-green-800',
+    'ANALYST': 'bg-gray-100 text-gray-800',
+  }
+  return colors[role] || 'bg-gray-100 text-gray-800'
 }
 
 function formatDate(date: string): string {

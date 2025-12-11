@@ -206,6 +206,13 @@ export const useAuthStore = defineStore('auth', () => {
     return hasRole(condominiumId, ['ADMIN'])
   }
 
+  function canManageUsers(condominiumId?: string): boolean {
+    if (isSuperAdmin.value) return true
+    if (!condominiumId) return false
+
+    return hasRole(condominiumId, ['ADMIN'])
+  }
+
   function isReadOnly(condominiumId?: string): boolean {
     if (isSuperAdmin.value) return false
     if (!condominiumId) return true
@@ -250,6 +257,7 @@ export const useAuthStore = defineStore('auth', () => {
     canValidateReadings,
     canManagePeriods,
     canManageBills,
+    canManageUsers,
     isReadOnly,
 
     clearError,

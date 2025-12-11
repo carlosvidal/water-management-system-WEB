@@ -11,6 +11,7 @@ export const useCondominiumStore = defineStore('condominium', () => {
   const units = ref<Unit[]>([])
   const residents = ref<Resident[]>([])
   const periods = ref<Period[]>([])
+  const users = ref<any[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -262,6 +263,40 @@ export const useCondominiumStore = defineStore('condominium', () => {
     }
   }
 
+  async function fetchUsers(condominiumId: string): Promise<void> {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await apiClient.getCondominiumUsers(condominiumId)
+      users.value = response || []
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al cargar usuarios'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createUser(condominiumId: string, data: any): Promise<any> {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await apiClient.createCondominiumUser(condominiumId, data)
+
+      // Refresh users list after creating
+      await fetchUsers(condominiumId)
+
+      return response
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al crear usuario'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function clearError(): void {
     error.value = null
   }
@@ -273,6 +308,7 @@ export const useCondominiumStore = defineStore('condominium', () => {
     units.value = []
     residents.value = []
     periods.value = []
+    users.value = []
     error.value = null
   }
 
@@ -284,6 +320,7 @@ export const useCondominiumStore = defineStore('condominium', () => {
     units,
     residents,
     periods,
+    users,
     loading,
     error,
 
@@ -308,6 +345,8 @@ export const useCondominiumStore = defineStore('condominium', () => {
     assignResidentToUnit,
     fetchPeriods,
     createPeriod,
+    fetchUsers,
+    createUser,
     clearError,
     reset,
   }
