@@ -171,12 +171,18 @@ async function handleLogin() {
       email: form.email,
       password: form.password,
     })
-    
+
     // Redirect based on user role
     if (authStore.isSuperAdmin) {
       router.push('/admin/dashboard')
+    } else if (authStore.condominiumAccess.length > 0) {
+      // Redirect to the first condominium the user has access to
+      const firstCondominium = authStore.condominiumAccess[0]
+      router.push(`/admin/condominiums/${firstCondominium.condominiumId}`)
     } else {
-      router.push('/admin/dashboard')
+      // User has no condominium access
+      error.value = 'No tienes acceso a ningún condominio'
+      await authStore.logout()
     }
   } catch (err: any) {
     console.error('Login error:', err)
