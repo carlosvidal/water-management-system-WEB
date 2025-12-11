@@ -193,7 +193,7 @@
                   <tbody class="bg-white divide-y divide-gray-200">
                     <tr v-for="unit in condominiumStore.units" :key="unit.id">
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ unit.number }}
+                        {{ unit.name }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ unit.block?.name }}
@@ -455,7 +455,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700">Número</label>
                 <input
-                  v-model="newUnit.number"
+                  v-model="newUnit.name"
                   type="text"
                   required
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
@@ -733,7 +733,7 @@ const authStore = useAuthStore()
 const condominiumStore = useCondominiumStore()
 
 const condominiumId = computed(() => route.params.id as string)
-const activeTab = ref('blocks')
+const activeTab = ref('periods')
 
 const showCreateBlockModal = ref(false)
 const showCreateUnitModal = ref(false)
@@ -742,11 +742,11 @@ const showCreateUserModal = ref(false)
 const showCreatePeriodModal = ref(false)
 
 const tabs = [
-  { id: 'blocks', name: 'Bloques' },
-  { id: 'units', name: 'Unidades' },
-  { id: 'residents', name: 'Residentes' },
-  { id: 'users', name: 'Usuarios' },
   { id: 'periods', name: 'Períodos' },
+  { id: 'users', name: 'Usuarios' },
+  { id: 'residents', name: 'Residentes' },
+  { id: 'units', name: 'Unidades' },
+  { id: 'blocks', name: 'Bloques' },
 ]
 
 const newBlock = reactive({
@@ -755,7 +755,7 @@ const newBlock = reactive({
 })
 
 const newUnit = reactive({
-  number: '',
+  name: '',
   blockId: '',
   area: null,
 })
@@ -814,13 +814,13 @@ async function createBlock() {
 async function createUnit() {
   try {
     await condominiumStore.createUnit(condominiumId.value, newUnit)
-    
+
     Object.assign(newUnit, {
-      number: '',
+      name: '',
       blockId: '',
       area: null,
     })
-    
+
     showCreateUnitModal.value = false
   } catch (error) {
     console.error('Error creating unit:', error)
