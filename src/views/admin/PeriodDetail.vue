@@ -102,6 +102,14 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Acciones</h3>
                 <div class="space-y-2">
                   <button
+                    v-if="authStore.canManagePeriods(condominiumId.value) && period.status !== 'CLOSED'"
+                    @click="openEditPeriodModal"
+                    class="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <PencilIcon class="h-4 w-4 mr-2" />
+                    Editar Período
+                  </button>
+                  <button
                     v-if="authStore.canCreateReadings(condominiumId.value)"
                     @click="showCreateReadingModal = true"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
@@ -117,6 +125,14 @@
                   >
                     <CalculatorIcon class="h-4 w-4 mr-2" />
                     Calcular Facturación
+                  </button>
+                  <button
+                    v-if="authStore.canManagePeriods(condominiumId.value) && period.status === 'ACTIVE'"
+                    @click="showClosePeriodConfirm = true"
+                    class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                  >
+                    <LockClosedIcon class="h-4 w-4 mr-2" />
+                    Cerrar Período
                   </button>
                 </div>
               </div>
@@ -366,6 +382,99 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Period Modal -->
+    <div
+      v-if="showEditPeriodModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Editar Período</h3>
+          <form @submit.prevent="updatePeriod">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  v-model="editPeriod.name"
+                  type="text"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                <input
+                  v-model="editPeriod.startDate"
+                  type="date"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+                <input
+                  v-model="editPeriod.endDate"
+                  type="date"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                @click="showEditPeriodModal = false"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="loading"
+                class="px-4 py-2 text-sm font-medium text-white bg-water-600 hover:bg-water-700 rounded-md disabled:opacity-50"
+              >
+                {{ loading ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Close Period Confirmation Modal -->
+    <div
+      v-if="showClosePeriodConfirm"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
+            <ExclamationTriangleIcon class="h-6 w-6 text-red-600" />
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 text-center mt-4 mb-2">Cerrar Período</h3>
+          <p class="text-sm text-gray-500 text-center mb-4">
+            ¿Estás seguro de que deseas cerrar este período? Esta acción es irreversible y no podrás agregar o modificar lecturas después.
+          </p>
+          <div class="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              @click="showClosePeriodConfirm = false"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="closePeriod"
+              :disabled="loading"
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
+            >
+              {{ loading ? 'Cerrando...' : 'Cerrar Período' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -381,6 +490,9 @@ import {
   PlusIcon,
   CalculatorIcon,
   DocumentTextIcon,
+  PencilIcon,
+  LockClosedIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -398,6 +510,8 @@ const availableUnits = ref<any[]>([])
 
 const showCreateReadingModal = ref(false)
 const showEditReadingModal = ref(false)
+const showEditPeriodModal = ref(false)
+const showClosePeriodConfirm = ref(false)
 const editingReading = ref<any>(null)
 
 const searchTerm = ref('')
@@ -412,6 +526,12 @@ const newReading = reactive({
 const editReading = reactive({
   currentReading: null,
   notes: '',
+})
+
+const editPeriod = reactive({
+  name: '',
+  startDate: '',
+  endDate: '',
 })
 
 const registeredReadings = computed(() => readings.value.filter(r => r.status === 'REGISTERED').length)
@@ -555,6 +675,54 @@ function getStatusColor(status: string): string {
       return 'bg-yellow-400'
     default:
       return 'bg-gray-400'
+  }
+}
+
+async function updatePeriod() {
+  try {
+    loading.value = true
+
+    await apiClient.updatePeriod(condominiumId.value, periodId.value, editPeriod)
+
+    // Reload period data
+    await loadPeriodData()
+
+    showEditPeriodModal.value = false
+  } catch (error) {
+    console.error('Error updating period:', error)
+    alert('Error al actualizar el período')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function closePeriod() {
+  try {
+    loading.value = true
+
+    await apiClient.closePeriod(condominiumId.value, periodId.value)
+
+    // Reload period data
+    await loadPeriodData()
+
+    showClosePeriodConfirm.value = false
+    alert('Período cerrado exitosamente')
+  } catch (error) {
+    console.error('Error closing period:', error)
+    alert('Error al cerrar el período')
+  } finally {
+    loading.value = false
+  }
+}
+
+function openEditPeriodModal() {
+  if (period.value) {
+    Object.assign(editPeriod, {
+      name: period.value.name,
+      startDate: period.value.startDate.split('T')[0],
+      endDate: period.value.endDate.split('T')[0],
+    })
+    showEditPeriodModal.value = true
   }
 }
 
