@@ -579,7 +579,7 @@ async function loadPeriodData() {
     period.value = periodResponse
     
     // Load readings for this period
-    const readingsResponse = await apiClient.getPeriodReadings(condominiumId.value, periodId.value)
+    const readingsResponse = await apiClient.getPeriodReadings(periodId.value)
     readings.value = readingsResponse.readings || readingsResponse || []
     
     // Load available units
