@@ -85,15 +85,15 @@
                 <dl class="space-y-2">
                   <div>
                     <dt class="text-sm font-medium text-gray-500">Total</dt>
-                    <dd class="text-sm text-gray-900">{{ totalConsumption.toLocaleString() }} L</dd>
+                    <dd class="text-sm text-gray-900">{{ totalConsumption.toLocaleString() }} m³</dd>
                   </div>
                   <div>
                     <dt class="text-sm font-medium text-gray-500">Promedio</dt>
-                    <dd class="text-sm text-gray-900">{{ averageConsumption.toLocaleString() }} L</dd>
+                    <dd class="text-sm text-gray-900">{{ averageConsumption.toLocaleString() }} m³</dd>
                   </div>
                   <div>
                     <dt class="text-sm font-medium text-gray-500">Áreas Comunes</dt>
-                    <dd class="text-sm text-gray-900">{{ commonAreaConsumption.toLocaleString() }} L</dd>
+                    <dd class="text-sm text-gray-900">{{ commonAreaConsumption.toLocaleString() }} m³</dd>
                   </div>
                 </dl>
               </div>
@@ -188,6 +188,9 @@
                       Consumo
                     </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Monto
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
                     </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -213,7 +216,10 @@
                       {{ reading.currentReading?.toLocaleString() || '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ reading.consumption?.toLocaleString() || '-' }} L
+                      {{ reading.consumption?.toLocaleString() || '-' }} m³
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ reading.totalCost ? `$${reading.totalCost.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <span :class="[
@@ -231,19 +237,22 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        v-if="reading.status === 'PENDING'"
+                        v-if="reading.status === 'PENDING' && (period.status !== 'CLOSED' || authStore.isSuperAdmin)"
                         @click="editReadingHandler(reading)"
                         class="text-water-600 hover:text-water-900"
                       >
                         Registrar
                       </button>
                       <button
-                        v-else
+                        v-else-if="reading.status === 'REGISTERED' && (period.status !== 'CLOSED' || authStore.isSuperAdmin)"
                         @click="editReadingHandler(reading)"
                         class="text-water-600 hover:text-water-900"
                       >
                         Editar
                       </button>
+                      <span v-else class="text-gray-400">
+                        -
+                      </span>
                     </td>
                   </tr>
                 </tbody>
