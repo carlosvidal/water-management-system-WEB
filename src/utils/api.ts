@@ -388,6 +388,11 @@ class ApiClient {
     return response.data
   }
 
+  async getPeriodCalculations(periodId: string) {
+    const response = await this.instance.get(`/periods/${periodId}/calculations`)
+    return response.data
+  }
+
   async validateReading(periodId: string, readingId: string, data: any) {
     const response = await this.instance.put(`/periods/${periodId}/readings/${readingId}/validate`, data)
     return response.data

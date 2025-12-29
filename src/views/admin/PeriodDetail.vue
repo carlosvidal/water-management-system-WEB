@@ -80,11 +80,25 @@
                 </dl>
               </div>
               
+              <div v-if="periodCalculation">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Volumen Facturado</h3>
+                <dl class="space-y-2">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Volumen</dt>
+                    <dd class="text-sm text-gray-900">{{ (period.totalVolume || 0).toLocaleString() }} m³</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Monto</dt>
+                    <dd class="text-sm text-gray-900">S/ {{ (period.totalAmount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</dd>
+                  </div>
+                </dl>
+              </div>
+
               <div>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Consumo</h3>
                 <dl class="space-y-2">
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Total</dt>
+                    <dt class="text-sm font-medium text-gray-500">Individual</dt>
                     <dd class="text-sm text-gray-900">{{ totalConsumption.toLocaleString() }} m³</dd>
                   </div>
                   <div>
@@ -219,7 +233,7 @@
                       {{ reading.consumption?.toLocaleString() || '-' }} m³
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {{ reading.totalCost ? `$${reading.totalCost.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-' }}
+                      {{ reading.totalAmount ? `S/ ${reading.totalAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <span :class="[
@@ -516,6 +530,8 @@ const loading = ref(false)
 const period = ref<any>(null)
 const readings = ref<any[]>([])
 const availableUnits = ref<any[]>([])
+const periodCalculation = ref<any>(null)
+const unitCalculations = ref<any[]>([])
 
 const showCreateReadingModal = ref(false)
 const showEditReadingModal = ref(false)
@@ -600,7 +616,30 @@ async function loadPeriodData() {
       // Ensure status is set based on currentReading
       status: r.currentReading !== null && r.currentReading !== undefined ? 'REGISTERED' : 'PENDING'
     }))
-    
+
+    // Load calculations if period is closed
+    if (period.value.status === 'CLOSED') {
+      try {
+        const calculationsResponse = await apiClient.getPeriodCalculations(periodId.value)
+        periodCalculation.value = calculationsResponse.periodCalculation
+        unitCalculations.value = calculationsResponse.unitCalculations || []
+
+        // Merge unit calculations with readings to show totalAmount
+        readings.value = readings.value.map((reading: any) => {
+          const unitCalc = unitCalculations.value.find((calc: any) => calc.unitId === reading.unit?.id)
+          return {
+            ...reading,
+            totalAmount: unitCalc?.totalAmount,
+            individualAmount: unitCalc?.individualAmount,
+            commonAreasAmount: unitCalc?.commonAreasAmount
+          }
+        })
+      } catch (error) {
+        console.error('Error loading calculations:', error)
+        // Don't fail if calculations don't exist yet
+      }
+    }
+
     // Load available units
     await condominiumStore.fetchUnits(condominiumId.value)
     availableUnits.value = condominiumStore.units
