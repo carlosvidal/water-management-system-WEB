@@ -227,7 +227,7 @@
                       {{ reading.registeredBy?.name || '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ reading.registeredAt ? formatDate(reading.registeredAt) : '-' }}
+                      {{ reading.createdAt ? formatDate(reading.createdAt) : '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
@@ -582,36 +582,13 @@ async function loadPeriodData() {
     const readingsResponse = await apiClient.getPeriodReadings(periodId.value)
     const rawReadings = readingsResponse.readings || readingsResponse || []
 
-    console.log('🔍 Raw readings response:', readingsResponse)
-    console.log('🔍 Raw readings array:', rawReadings)
-    console.log('🔍 First reading sample:', rawReadings[0])
-
-    // Transform readings to match expected structure
-    readings.value = rawReadings.map((r: any) => {
-      console.log('📦 Processing reading:', r)
-      console.log('  - meter:', r.meter)
-      console.log('  - meter.unit:', r.meter?.unit)
-      console.log('  - value:', r.value)
-
-      return {
-        id: r.id,
-        unit: r.meter?.unit || null,
-        currentReading: r.value,
-        previousReading: r.previousValue || null,
-        consumption: r.consumption || 0,
-        status: r.value ? 'REGISTERED' : 'PENDING',
-        registeredBy: r.createdBy || null,
-        registeredAt: r.createdAt,
-        meter: r.meter,
-        value: r.value,
-        notes: r.notes,
-        isValidated: r.isValidated,
-        isAnomalous: r.isAnomalous,
-      }
-    })
-
-    console.log('✅ Transformed readings:', readings.value)
-    console.log('✅ First transformed reading:', readings.value[0])
+    // Backend returns flattened structure with unit at root level
+    // No transformation needed - use data as-is
+    readings.value = rawReadings.map((r: any) => ({
+      ...r,
+      // Ensure status is set based on currentReading
+      status: r.currentReading !== null && r.currentReading !== undefined ? 'REGISTERED' : 'PENDING'
+    }))
     
     // Load available units
     await condominiumStore.fetchUnits(condominiumId.value)
