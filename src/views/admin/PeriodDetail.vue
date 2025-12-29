@@ -558,7 +558,9 @@ const averageConsumption = computed(() => {
 })
 
 const commonAreaConsumption = computed(() => {
-  return 5000 // Mock data
+  // Common area consumption = total volume from receipt - sum of individual consumptions
+  const totalVolume = period.value?.totalVolume || 0
+  return totalVolume - totalConsumption.value
 })
 
 const filteredReadings = computed(() => {
