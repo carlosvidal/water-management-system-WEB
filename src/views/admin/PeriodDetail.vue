@@ -204,7 +204,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="reading in filteredReadings" :key="reading.id">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {{ reading.unit?.block?.name }}-{{ reading.unit?.number }}
+                      {{ reading.unit?.block?.name }}-{{ reading.unit?.name }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ reading.previousReading?.toLocaleString() || '-' }}
@@ -273,7 +273,7 @@
                 >
                   <option value="">Seleccionar unidad</option>
                   <option v-for="unit in availableUnits" :key="unit.id" :value="unit.id">
-                    {{ unit.block?.name }}-{{ unit.number }}
+                    {{ unit.block?.name }}-{{ unit.name }}
                   </option>
                 </select>
               </div>
@@ -330,7 +330,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700">Unidad</label>
                 <input
-                  :value="`${editingReading?.unit?.block?.name}-${editingReading?.unit?.number}`"
+                  :value="`${editingReading?.unit?.block?.name}-${editingReading?.unit?.name}`"
                   disabled
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 sm:text-sm"
                 />
@@ -557,8 +557,8 @@ const filteredReadings = computed(() => {
 
   if (searchTerm.value) {
     const term = searchTerm.value.toLowerCase()
-    filtered = filtered.filter(r => 
-      r.unit?.number?.toLowerCase().includes(term) ||
+    filtered = filtered.filter(r =>
+      r.unit?.name?.toLowerCase().includes(term) ||
       r.unit?.block?.name?.toLowerCase().includes(term)
     )
   }
@@ -580,7 +580,24 @@ async function loadPeriodData() {
     
     // Load readings for this period
     const readingsResponse = await apiClient.getPeriodReadings(periodId.value)
-    readings.value = readingsResponse.readings || readingsResponse || []
+    const rawReadings = readingsResponse.readings || readingsResponse || []
+
+    // Transform readings to match expected structure
+    readings.value = rawReadings.map((r: any) => ({
+      id: r.id,
+      unit: r.meter?.unit || null,
+      currentReading: r.value,
+      previousReading: r.previousValue || null,
+      consumption: r.consumption || 0,
+      status: r.value ? 'REGISTERED' : 'PENDING',
+      registeredBy: r.createdBy || null,
+      registeredAt: r.createdAt,
+      meter: r.meter,
+      value: r.value,
+      notes: r.notes,
+      isValidated: r.isValidated,
+      isAnomalous: r.isAnomalous,
+    }))
     
     // Load available units
     await condominiumStore.fetchUnits(condominiumId.value)
