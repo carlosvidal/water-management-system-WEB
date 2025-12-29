@@ -349,7 +349,7 @@ class ApiClient {
 
   // Periods management
   async createPeriod(condominiumId: string, data: any) {
-    const response = await this.instance.post(`/condominiums/${condominiumId}/periods`, data)
+    const response = await this.instance.post('/periods', { ...data, condominiumId })
     return response.data
   }
 
@@ -363,13 +363,13 @@ class ApiClient {
     return response.data
   }
 
-  async updatePeriod(condominiumId: string, periodId: string, data: any) {
-    const response = await this.instance.put(`/condominiums/${condominiumId}/periods/${periodId}`, data)
+  async updatePeriod(periodId: string, data: any) {
+    const response = await this.instance.put(`/periods/${periodId}`, data)
     return response.data
   }
 
-  async closePeriod(condominiumId: string, periodId: string) {
-    const response = await this.instance.post(`/condominiums/${condominiumId}/periods/${periodId}/close`)
+  async closePeriod(periodId: string) {
+    const response = await this.instance.put(`/periods/${periodId}/close`)
     return response.data
   }
 
@@ -378,8 +378,8 @@ class ApiClient {
     return response.data
   }
 
-  async createReading(condominiumId: string, periodId: string, data: any) {
-    const response = await this.instance.post(`/condominiums/${condominiumId}/periods/${periodId}/readings`, data)
+  async createReading(periodId: string, data: any) {
+    const response = await this.instance.post(`/periods/${periodId}/readings`, data)
     return response.data
   }
 

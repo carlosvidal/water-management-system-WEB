@@ -596,7 +596,7 @@ async function createReading() {
   try {
     loading.value = true
     
-    const response = await apiClient.createReading(condominiumId.value, periodId.value, newReading)
+    const response = await apiClient.createReading(periodId.value, newReading)
     readings.value.push(response)
     
     Object.assign(newReading, {
@@ -682,7 +682,7 @@ async function updatePeriod() {
   try {
     loading.value = true
 
-    await apiClient.updatePeriod(condominiumId.value, periodId.value, editPeriod)
+    await apiClient.updatePeriod(periodId.value, editPeriod)
 
     // Reload period data
     await loadPeriodData()
@@ -700,7 +700,7 @@ async function closePeriod() {
   try {
     loading.value = true
 
-    await apiClient.closePeriod(condominiumId.value, periodId.value)
+    await apiClient.closePeriod(periodId.value)
 
     // Reload period data
     await loadPeriodData()
