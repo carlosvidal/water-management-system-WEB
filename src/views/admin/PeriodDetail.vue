@@ -584,11 +584,15 @@ async function loadPeriodData() {
 
     // Backend returns flattened structure with unit at root level
     // No transformation needed - use data as-is
+    console.log('📊 Sample reading from backend:', JSON.stringify(rawReadings[0], null, 2))
+
     readings.value = rawReadings.map((r: any) => ({
       ...r,
       // Ensure status is set based on currentReading
       status: r.currentReading !== null && r.currentReading !== undefined ? 'REGISTERED' : 'PENDING'
     }))
+
+    console.log('📊 Sample transformed reading:', JSON.stringify(readings.value[0], null, 2))
     
     // Load available units
     await condominiumStore.fetchUnits(condominiumId.value)
