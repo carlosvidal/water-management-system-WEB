@@ -358,8 +358,8 @@ class ApiClient {
     return response.data
   }
 
-  async getPeriod(condominiumId: string, periodId: string) {
-    const response = await this.instance.get(`/condominiums/${condominiumId}/periods/${periodId}`)
+  async getPeriod(periodId: string) {
+    const response = await this.instance.get(`/periods/${periodId}`)
     return response.data
   }
 
