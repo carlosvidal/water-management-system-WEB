@@ -582,22 +582,36 @@ async function loadPeriodData() {
     const readingsResponse = await apiClient.getPeriodReadings(periodId.value)
     const rawReadings = readingsResponse.readings || readingsResponse || []
 
+    console.log('🔍 Raw readings response:', readingsResponse)
+    console.log('🔍 Raw readings array:', rawReadings)
+    console.log('🔍 First reading sample:', rawReadings[0])
+
     // Transform readings to match expected structure
-    readings.value = rawReadings.map((r: any) => ({
-      id: r.id,
-      unit: r.meter?.unit || null,
-      currentReading: r.value,
-      previousReading: r.previousValue || null,
-      consumption: r.consumption || 0,
-      status: r.value ? 'REGISTERED' : 'PENDING',
-      registeredBy: r.createdBy || null,
-      registeredAt: r.createdAt,
-      meter: r.meter,
-      value: r.value,
-      notes: r.notes,
-      isValidated: r.isValidated,
-      isAnomalous: r.isAnomalous,
-    }))
+    readings.value = rawReadings.map((r: any) => {
+      console.log('📦 Processing reading:', r)
+      console.log('  - meter:', r.meter)
+      console.log('  - meter.unit:', r.meter?.unit)
+      console.log('  - value:', r.value)
+
+      return {
+        id: r.id,
+        unit: r.meter?.unit || null,
+        currentReading: r.value,
+        previousReading: r.previousValue || null,
+        consumption: r.consumption || 0,
+        status: r.value ? 'REGISTERED' : 'PENDING',
+        registeredBy: r.createdBy || null,
+        registeredAt: r.createdAt,
+        meter: r.meter,
+        value: r.value,
+        notes: r.notes,
+        isValidated: r.isValidated,
+        isAnomalous: r.isAnomalous,
+      }
+    })
+
+    console.log('✅ Transformed readings:', readings.value)
+    console.log('✅ First transformed reading:', readings.value[0])
     
     // Load available units
     await condominiumStore.fetchUnits(condominiumId.value)
