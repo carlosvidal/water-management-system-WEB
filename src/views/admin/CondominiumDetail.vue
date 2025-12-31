@@ -422,9 +422,9 @@
                 >
                   <div class="flex items-center justify-between">
                     <div>
-                      <h4 class="font-medium text-gray-900">{{ period.name }}</h4>
+                      <h4 class="font-medium text-gray-900">{{ getPeriodName(period) }}</h4>
                       <p class="text-sm text-gray-500">
-                        {{ formatDate(period.startDate) }} - {{ period.endDate ? formatDate(period.endDate) : 'Abierto' }}
+                        Lectura: {{ formatDate(period.startDate) }}{{ period.endDate ? ' - Cierre: ' + formatDate(period.endDate) : '' }}
                       </p>
                       <div class="mt-1 flex items-center space-x-4 text-xs text-gray-500">
                         <span>{{ period.readings?.length || 0 }} lecturas</span>
@@ -774,35 +774,49 @@
     >
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Período</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Crear Período de Lectura</h3>
+
+          <!-- Warning if there's an open period -->
+          <div v-if="hasOpenPeriod" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span class="text-sm font-medium text-yellow-800">Período Activo Detectado</span>
+            </div>
+            <p class="mt-1 text-sm text-yellow-700">
+              Ya existe un período abierto. Se recomienda cerrar el período actual antes de crear uno nuevo.
+            </p>
+          </div>
+
+          <!-- Info card -->
+          <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <div class="flex items-start">
+              <svg class="h-5 w-5 text-blue-600 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="text-sm text-blue-700">
+                <p class="font-medium">Información del Período</p>
+                <ul class="mt-1 list-disc list-inside space-y-1">
+                  <li>Se creará en estado "ABIERTO"</li>
+                  <li>Abarca desde la última lectura hasta la fecha seleccionada</li>
+                  <li>El nombre se genera automáticamente</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <form @submit.prevent="createPeriod">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700">Nombre del Período</label>
-                <input
-                  v-model="newPeriod.name"
-                  type="text"
-                  required
-                  placeholder="Ej: Marzo 2024"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                <label class="block text-sm font-medium text-gray-700">Fecha de Lectura</label>
                 <input
                   v-model="newPeriod.startDate"
                   type="date"
                   required
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
                 />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
-                <input
-                  v-model="newPeriod.endDate"
-                  type="date"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
-                />
+                <p class="mt-1 text-xs text-gray-500">Fecha en que se registrarán las lecturas de los medidores</p>
               </div>
             </div>
             <div class="flex justify-end space-x-3 mt-6">
@@ -818,7 +832,7 @@
                 :disabled="condominiumStore.loading"
                 class="px-4 py-2 text-sm font-medium text-white bg-water-600 hover:bg-water-700 rounded-md disabled:opacity-50"
               >
-                {{ condominiumStore.loading ? 'Creando...' : 'Crear' }}
+                {{ condominiumStore.loading ? 'Creando...' : 'Crear Período' }}
               </button>
             </div>
           </form>
@@ -1002,9 +1016,7 @@ const newUser = reactive({
 })
 
 const newPeriod = reactive({
-  name: '',
   startDate: '',
-  endDate: '',
 })
 
 function openEditModal() {
@@ -1218,30 +1230,50 @@ function formatDate(date: string): string {
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'ACTIVE':
+    case 'OPEN':
       return 'bg-green-400'
+    case 'PENDING_RECEIPT':
+      return 'bg-yellow-400'
+    case 'CALCULATING':
+      return 'bg-blue-400'
     case 'CLOSED':
       return 'bg-gray-400'
-    case 'PROCESSING':
-      return 'bg-yellow-400'
     default:
       return 'bg-gray-400'
   }
 }
 
+function getPeriodName(period: any): string {
+  // If period has a name, use it
+  if (period.name) {
+    return period.name
+  }
+  // Otherwise generate name from startDate (e.g., "Diciembre 2025")
+  const date = new Date(period.startDate)
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ]
+  return `${months[date.getMonth()]} ${date.getFullYear()}`
+}
+
 async function createPeriod() {
   try {
-    await condominiumStore.createPeriod(condominiumId.value, newPeriod)
-    
-    Object.assign(newPeriod, {
-      name: '',
-      startDate: '',
-      endDate: '',
+    // Convert date to ISO format with timezone for API
+    const startDateISO = new Date(newPeriod.startDate + 'T00:00:00').toISOString()
+
+    await condominiumStore.createPeriod(condominiumId.value, {
+      startDate: startDateISO
     })
-    
+
+    Object.assign(newPeriod, {
+      startDate: '',
+    })
+
     showCreatePeriodModal.value = false
   } catch (error) {
     console.error('Error creating period:', error)
+    alert('Error al crear el período. Verifique que no exista un período abierto.')
   }
 }
 

@@ -12,7 +12,7 @@
               <ArrowLeftIcon class="h-5 w-5" />
             </router-link>
             <h1 class="text-xl font-semibold text-gray-900">
-              {{ period?.name || 'Cargando período...' }}
+              {{ getPeriodName(period) }}
             </h1>
           </div>
           <div class="flex items-center space-x-4">
@@ -778,14 +778,31 @@ function formatDate(date: string): string {
   })
 }
 
+function getPeriodName(period: any): string {
+  if (!period) return 'Cargando período...'
+  // If period has a name, use it
+  if (period.name) {
+    return period.name
+  }
+  // Otherwise generate name from startDate (e.g., "Diciembre 2025")
+  const date = new Date(period.startDate)
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ]
+  return `${months[date.getMonth()]} ${date.getFullYear()}`
+}
+
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'ACTIVE':
+    case 'OPEN':
       return 'bg-green-400'
+    case 'PENDING_RECEIPT':
+      return 'bg-yellow-400'
+    case 'CALCULATING':
+      return 'bg-blue-400'
     case 'CLOSED':
       return 'bg-gray-400'
-    case 'PROCESSING':
-      return 'bg-yellow-400'
     default:
       return 'bg-gray-400'
   }
