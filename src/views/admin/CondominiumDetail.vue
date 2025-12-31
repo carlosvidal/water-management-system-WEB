@@ -138,12 +138,22 @@
                 <div
                   v-for="block in condominiumStore.blocks"
                   :key="block.id"
-                  class="bg-gray-50 rounded-lg p-4"
+                  class="bg-gray-50 rounded-lg p-4 flex flex-col justify-between"
                 >
-                  <h4 class="font-medium text-gray-900">{{ block.name }}</h4>
-                  <p class="text-sm text-gray-500 mt-1">{{ block.description }}</p>
-                  <div class="mt-2 text-xs text-gray-500">
-                    {{ block.units?.length || 0 }} unidades
+                  <div>
+                    <h4 class="font-medium text-gray-900">{{ block.name }}</h4>
+                    <p class="text-sm text-gray-500 mt-1">{{ block.description }}</p>
+                    <div class="mt-2 text-xs text-gray-500">
+                      {{ block.units?.length || 0 }} unidades
+                    </div>
+                  </div>
+                  <div v-if="authStore.canEdit(condominiumId)" class="mt-4 flex justify-end space-x-2">
+                    <button @click="openEditBlockModal(block)" class="p-1 text-gray-400 hover:text-gray-600">
+                      <PencilIcon class="h-4 w-4" />
+                    </button>
+                    <button @click="confirmDeleteBlock(block)" class="p-1 text-red-400 hover:text-red-600">
+                      <TrashIcon class="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -210,12 +220,22 @@
                         </span>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          @click="selectUnitForResident(unit)"
-                          class="text-water-600 hover:text-water-900"
-                        >
-                          {{ unit.resident ? 'Cambiar' : 'Asignar' }}
-                        </button>
+                        <div class="flex items-center space-x-2">
+                          <button
+                            @click="openEditUnitModal(unit)"
+                            v-if="authStore.canManageUnits(condominiumId)"
+                            class="p-1 text-gray-400 hover:text-gray-600"
+                          >
+                            <PencilIcon class="h-4 w-4" />
+                          </button>
+                          <button
+                            @click="confirmDeleteUnit(unit)"
+                            v-if="authStore.canManageUnits(condominiumId)"
+                            class="p-1 text-red-400 hover:text-red-600"
+                          >
+                            <TrashIcon class="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -389,6 +409,64 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Condominium Modal -->
+    <div
+      v-if="showEditCondominiumModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Editar Condominio</h3>
+          <form @submit.prevent="updateCondo" v-if="editingCondo">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  v-model="editingCondo.name"
+                  type="text"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                <input
+                  v-model="editingCondo.address"
+                  type="text"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+               <div>
+                <label class="block text-sm font-medium text-gray-700">Ciudad</label>
+                <input
+                  v-model="editingCondo.city"
+                  type="text"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                @click="showEditCondominiumModal = false"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="condominiumStore.loading"
+                class="px-4 py-2 text-sm font-medium text-white bg-water-600 hover:bg-water-700 rounded-md disabled:opacity-50"
+              >
+                {{ condominiumStore.loading ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -735,6 +813,8 @@ const condominiumStore = useCondominiumStore()
 const condominiumId = computed(() => route.params.id as string)
 const activeTab = ref('periods')
 
+const showEditCondominiumModal = ref(false)
+const editingCondo = ref<any>(null)
 const showCreateBlockModal = ref(false)
 const showCreateUnitModal = ref(false)
 const showCreateResidentModal = ref(false)
@@ -780,6 +860,21 @@ const newPeriod = reactive({
   startDate: '',
   endDate: '',
 })
+
+function openEditModal() {
+  editingCondo.value = { ...condominiumStore.current }
+  showEditCondominiumModal.value = true
+}
+
+async function updateCondo() {
+  if (!editingCondo.value) return
+  try {
+    await condominiumStore.updateCondominium(condominiumId.value, editingCondo.value)
+    showEditCondominiumModal.value = false
+  } catch (error) {
+    console.error('Error updating condominium:', error)
+  }
+}
 
 async function loadCondominiumData() {
   try {
