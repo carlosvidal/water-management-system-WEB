@@ -116,7 +116,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Acciones</h3>
                 <div class="space-y-2">
                   <button
-                    v-if="authStore.canManagePeriods(condominiumId.value) && period.status !== 'CLOSED'"
+                    v-if="authStore.canManagePeriods(condominiumId) && period.status !== 'CLOSED'"
                     @click="openEditPeriodModal"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
@@ -124,7 +124,7 @@
                     Editar Período
                   </button>
                   <button
-                    v-if="authStore.canCreateReadings(condominiumId.value)"
+                    v-if="authStore.canCreateReadings(condominiumId) && period.status !== 'CLOSED'"
                     @click="showCreateReadingModal = true"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                   >
@@ -132,21 +132,38 @@
                     Nueva Lectura
                   </button>
                   <button
-                    v-if="authStore.canManageBills(condominiumId.value)"
+                    v-if="authStore.canValidateReadings(condominiumId) && period.status !== 'CLOSED' && pendingReadings > 0"
+                    @click="validateAllReadings"
+                    :disabled="validatingAll"
+                    class="w-full inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50"
+                  >
+                    <CheckCircleIcon class="h-4 w-4 mr-2" />
+                    {{ validatingAll ? 'Validando...' : 'Validar Todas' }}
+                  </button>
+                  <button
+                    v-if="authStore.canManageBills(condominiumId) && period.status !== 'CLOSED'"
                     @click="calculateBilling"
-                    :disabled="period.status === 'CLOSED'"
+                    :disabled="loading"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                   >
                     <CalculatorIcon class="h-4 w-4 mr-2" />
                     Calcular Facturación
                   </button>
                   <button
-                    v-if="authStore.canManagePeriods(condominiumId.value) && period.status === 'ACTIVE'"
+                    v-if="authStore.canManagePeriods(condominiumId) && (period.status === 'OPEN' || period.status === 'PENDING_RECEIPT')"
                     @click="showClosePeriodConfirm = true"
                     class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
                   >
                     <LockClosedIcon class="h-4 w-4 mr-2" />
                     Cerrar Período
+                  </button>
+                  <button
+                    v-if="authStore.isSuperAdmin && period.status === 'CLOSED'"
+                    @click="showResetPeriodConfirm = true"
+                    class="w-full inline-flex items-center justify-center px-3 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-yellow-50 hover:bg-yellow-100"
+                  >
+                    <LockOpenIcon class="h-4 w-4 mr-2" />
+                    Reabrir Período
                   </button>
                 </div>
               </div>
@@ -498,6 +515,40 @@
         </div>
       </div>
     </div>
+
+    <!-- Reset Period Confirmation Modal -->
+    <div
+      v-if="showResetPeriodConfirm"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-100 rounded-full">
+            <LockOpenIcon class="h-6 w-6 text-yellow-600" />
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 text-center mt-4 mb-2">Reabrir Período</h3>
+          <p class="text-sm text-gray-500 text-center mb-4">
+            ¿Estás seguro de que deseas reabrir este período? Esto permitirá modificar lecturas y recalcular facturación.
+          </p>
+          <div class="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              @click="showResetPeriodConfirm = false"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="resetPeriod"
+              :disabled="loading"
+              class="px-4 py-2 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md disabled:opacity-50"
+            >
+              {{ loading ? 'Reabriendo...' : 'Reabrir Período' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -515,7 +566,10 @@ import {
   DocumentTextIcon,
   PencilIcon,
   LockClosedIcon,
+  LockOpenIcon,
   ExclamationTriangleIcon,
+  CheckCircleIcon,
+  CheckIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -537,7 +591,9 @@ const showCreateReadingModal = ref(false)
 const showEditReadingModal = ref(false)
 const showEditPeriodModal = ref(false)
 const showClosePeriodConfirm = ref(false)
+const showResetPeriodConfirm = ref(false)
 const editingReading = ref<any>(null)
+const validatingAll = ref(false)
 
 const searchTerm = ref('')
 const statusFilter = ref('')
@@ -767,6 +823,82 @@ async function closePeriod() {
   } catch (error) {
     console.error('Error closing period:', error)
     alert('Error al cerrar el período')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function resetPeriod() {
+  try {
+    loading.value = true
+
+    await apiClient.resetPeriod(periodId.value)
+
+    // Reload period data
+    await loadPeriodData()
+
+    showResetPeriodConfirm.value = false
+    alert('Período reabierto exitosamente')
+  } catch (error: any) {
+    console.error('Error resetting period:', error)
+    alert(error.response?.data?.message || 'Error al reabrir el período')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function validateAllReadings() {
+  if (!confirm('¿Validar todas las lecturas pendientes?')) return
+
+  try {
+    validatingAll.value = true
+
+    await apiClient.validateAllReadings(periodId.value)
+
+    // Reload period data
+    await loadPeriodData()
+
+    alert('Todas las lecturas han sido validadas')
+  } catch (error: any) {
+    console.error('Error validating all readings:', error)
+    alert(error.response?.data?.message || 'Error al validar las lecturas')
+  } finally {
+    validatingAll.value = false
+  }
+}
+
+async function saveCalculations() {
+  try {
+    loading.value = true
+
+    // Get the calculations data
+    const calculationsData = {
+      periodCalculation: {
+        totalVolume: period.value?.totalVolume || 0,
+        totalAmount: period.value?.totalAmount || 0,
+        totalIndividualConsumption: totalConsumption.value,
+        commonAreaConsumption: commonAreaConsumption.value
+      },
+      unitCalculations: readings.value.map((r: any) => ({
+        unitId: r.unit?.id,
+        consumption: r.consumption || 0,
+        previousReading: r.previousReading,
+        currentReading: r.currentReading,
+        individualAmount: r.individualAmount || 0,
+        commonAreaAmount: r.commonAreasAmount || 0,
+        totalAmount: r.totalAmount || 0
+      }))
+    }
+
+    await apiClient.savePeriodCalculations(periodId.value, calculationsData)
+
+    // Reload period data
+    await loadPeriodData()
+
+    alert('Cálculos guardados exitosamente')
+  } catch (error: any) {
+    console.error('Error saving calculations:', error)
+    alert(error.response?.data?.message || 'Error al guardar los cálculos')
   } finally {
     loading.value = false
   }

@@ -119,7 +119,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Bloques</h3>
                 <button
-                  v-if="authStore.canEdit(condominiumId.value)"
+                  v-if="authStore.canEdit(condominiumId)"
                   @click="showCreateBlockModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -164,7 +164,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Unidades</h3>
                 <button
-                  v-if="authStore.canManageUnits(condominiumId.value)"
+                  v-if="authStore.canManageUnits(condominiumId)"
                   @click="showCreateUnitModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -222,9 +222,25 @@
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex items-center space-x-2">
                           <button
+                            @click="openUnitDetail(unit)"
+                            class="p-1 text-water-400 hover:text-water-600"
+                            title="Ver historial de consumo"
+                          >
+                            <ChartBarIcon class="h-4 w-4" />
+                          </button>
+                          <button
+                            @click="openUnitResidents(unit)"
+                            v-if="authStore.canManageResidents(condominiumId)"
+                            class="p-1 text-green-400 hover:text-green-600"
+                            title="Gestionar residentes"
+                          >
+                            <UserGroupIcon class="h-4 w-4" />
+                          </button>
+                          <button
                             @click="openEditUnitModal(unit)"
                             v-if="authStore.canManageUnits(condominiumId)"
                             class="p-1 text-gray-400 hover:text-gray-600"
+                            title="Editar unidad"
                           >
                             <PencilIcon class="h-4 w-4" />
                           </button>
@@ -232,6 +248,7 @@
                             @click="confirmDeleteUnit(unit)"
                             v-if="authStore.canManageUnits(condominiumId)"
                             class="p-1 text-red-400 hover:text-red-600"
+                            title="Eliminar unidad"
                           >
                             <TrashIcon class="h-4 w-4" />
                           </button>
@@ -248,7 +265,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Residentes</h3>
                 <button
-                  v-if="authStore.canManageResidents(condominiumId.value)"
+                  v-if="authStore.canManageResidents(condominiumId)"
                   @click="showCreateResidentModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -287,7 +304,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Usuarios del Condominio</h3>
                 <button
-                  v-if="authStore.canManageUsers(condominiumId.value)"
+                  v-if="authStore.canManageUsers(condominiumId)"
                   @click="showCreateUserModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -321,6 +338,9 @@
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Estado
                       </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
@@ -350,6 +370,24 @@
                           {{ condoUser.user.isActive ? 'Activo' : 'Inactivo' }}
                         </span>
                       </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div v-if="authStore.canManageUsers(condominiumId)" class="flex items-center space-x-2">
+                          <button
+                            @click="openEditUserModal(condoUser)"
+                            class="p-1 text-gray-400 hover:text-gray-600"
+                            title="Editar usuario"
+                          >
+                            <PencilIcon class="h-4 w-4" />
+                          </button>
+                          <button
+                            @click="confirmDeleteUser(condoUser)"
+                            class="p-1 text-red-400 hover:text-red-600"
+                            title="Eliminar usuario"
+                          >
+                            <TrashIcon class="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -361,7 +399,7 @@
               <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Períodos de Facturación</h3>
                 <button
-                  v-if="authStore.canManagePeriods(condominiumId.value)"
+                  v-if="authStore.canManagePeriods(condominiumId)"
                   @click="showCreatePeriodModal = true"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-water-600 hover:bg-water-700"
                 >
@@ -386,7 +424,7 @@
                     <div>
                       <h4 class="font-medium text-gray-900">{{ period.name }}</h4>
                       <p class="text-sm text-gray-500">
-                        {{ formatDate(period.startDate) }} - {{ formatDate(period.endDate) }}
+                        {{ formatDate(period.startDate) }} - {{ period.endDate ? formatDate(period.endDate) : 'Abierto' }}
                       </p>
                       <div class="mt-1 flex items-center space-x-4 text-xs text-gray-500">
                         <span>{{ period.readings?.length || 0 }} lecturas</span>
@@ -787,6 +825,94 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit User Modal -->
+    <div
+      v-if="showEditUserModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Editar Usuario</h3>
+          <form @submit.prevent="updateUser" v-if="editingUser">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  v-model="editingUser.name"
+                  type="text"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  v-model="editingUser.email"
+                  type="email"
+                  disabled
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Telefono</label>
+                <input
+                  v-model="editingUser.phone"
+                  type="tel"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Rol</label>
+                <select
+                  v-model="editingUser.role"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                >
+                  <option value="ADMIN">Administrador</option>
+                  <option value="EDITOR">Editor</option>
+                  <option value="ANALYST">Lector</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                @click="showEditUserModal = false"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="condominiumStore.loading"
+                class="px-4 py-2 text-sm font-medium text-white bg-water-600 hover:bg-water-700 rounded-md disabled:opacity-50"
+              >
+                {{ condominiumStore.loading ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unit Residents Modal -->
+    <UnitResidentsModal
+      :show="showUnitResidentsModal"
+      :unit="selectedUnit"
+      :condominium-id="condominiumId"
+      @close="showUnitResidentsModal = false"
+      @updated="onUnitResidentsUpdated"
+    />
+
+    <!-- Unit Detail Modal -->
+    <UnitDetailModal
+      :show="showUnitDetailModal"
+      :unit="selectedUnit"
+      :condominium-id="condominiumId"
+      :block-name="selectedUnit ? getBlockName(selectedUnit.blockId) : ''"
+      @close="showUnitDetailModal = false"
+    />
   </div>
 </template>
 
@@ -803,7 +929,13 @@ import {
   UsersIcon,
   CalendarIcon,
   PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ChartBarIcon,
+  UserGroupIcon,
 } from '@heroicons/vue/24/outline'
+import UnitResidentsModal from '@/components/UnitResidentsModal.vue'
+import UnitDetailModal from '@/components/UnitDetailModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -820,6 +952,20 @@ const showCreateUnitModal = ref(false)
 const showCreateResidentModal = ref(false)
 const showCreateUserModal = ref(false)
 const showCreatePeriodModal = ref(false)
+
+// New modals for unit residents and detail
+const showUnitResidentsModal = ref(false)
+const showUnitDetailModal = ref(false)
+const selectedUnit = ref<any>(null)
+
+// Edit user modal
+const showEditUserModal = ref(false)
+const editingUser = ref<any>(null)
+
+// Active period warning
+const hasOpenPeriod = computed(() => {
+  return condominiumStore.periods.some(p => p.status === 'OPEN' || p.status === 'PENDING_RECEIPT')
+})
 
 const tabs = [
   { id: 'periods', name: 'Períodos' },
@@ -959,6 +1105,87 @@ async function createUser() {
 
 function selectUnitForResident(unit: any) {
   console.log('Select resident for unit:', unit)
+}
+
+// Unit modals
+function openUnitResidents(unit: any) {
+  selectedUnit.value = unit
+  showUnitResidentsModal.value = true
+}
+
+function openUnitDetail(unit: any) {
+  selectedUnit.value = unit
+  showUnitDetailModal.value = true
+}
+
+function getBlockName(blockId: string): string {
+  const block = condominiumStore.blocks.find(b => b.id === blockId)
+  return block?.name || ''
+}
+
+function onUnitResidentsUpdated() {
+  // Reload units to get updated resident info
+  condominiumStore.fetchUnits(condominiumId.value)
+}
+
+// User CRUD
+function openEditUserModal(condoUser: any) {
+  editingUser.value = {
+    id: condoUser.userId,
+    name: condoUser.user.name,
+    email: condoUser.user.email,
+    phone: condoUser.user.phone || '',
+    role: condoUser.role
+  }
+  showEditUserModal.value = true
+}
+
+async function updateUser() {
+  if (!editingUser.value) return
+  try {
+    await condominiumStore.updateUser(condominiumId.value, editingUser.value.id, {
+      name: editingUser.value.name,
+      phone: editingUser.value.phone,
+      role: editingUser.value.role
+    })
+    showEditUserModal.value = false
+    editingUser.value = null
+  } catch (error) {
+    console.error('Error updating user:', error)
+  }
+}
+
+async function confirmDeleteUser(condoUser: any) {
+  if (!confirm(`¿Eliminar al usuario ${condoUser.user.name} de este condominio?`)) return
+  try {
+    await condominiumStore.deleteUser(condominiumId.value, condoUser.userId)
+  } catch (error) {
+    console.error('Error deleting user:', error)
+  }
+}
+
+// Block CRUD
+function openEditBlockModal(block: any) {
+  // TODO: Implement edit block
+  console.log('Edit block:', block)
+}
+
+function confirmDeleteBlock(block: any) {
+  if (!confirm(`¿Eliminar el bloque ${block.name}?`)) return
+  // TODO: Implement delete block
+  console.log('Delete block:', block)
+}
+
+// Unit CRUD
+function openEditUnitModal(unit: any) {
+  // TODO: Implement edit unit
+  console.log('Edit unit:', unit)
+}
+
+function confirmDeleteUnit(unit: any) {
+  if (!confirm(`¿Eliminar la unidad ${unit.name}?`)) return
+  // TODO: Implement delete unit
+  console.log('Delete unit:', unit)
 }
 
 function getRoleName(role: string): string {

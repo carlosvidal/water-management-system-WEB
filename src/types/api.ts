@@ -29,6 +29,8 @@ export interface Condominium {
   id: string
   name: string
   address: string
+  city?: string
+  country?: string
   readingDay?: number
   bankAccount?: string
   bankAccountHolder?: string
@@ -38,14 +40,25 @@ export interface Condominium {
   createdAt: string
   updatedAt: string
   plan?: Plan
+  blocks?: Block[]
+  totalUnits?: number
+  _count?: {
+    blocks?: number
+    units?: number
+  }
 }
 
 export interface Block {
   id: string
   name: string
+  description?: string
   condominiumId: string
   maxUnits: number
   createdAt: string
+  units?: Unit[]
+  _count?: {
+    units?: number
+  }
 }
 
 export interface Unit {
@@ -66,12 +79,15 @@ export interface Resident {
   email?: string
   phone?: string
   condominiumId: string
+  isActive?: boolean
+  isPrimary?: boolean
   createdAt: string
   updatedAt: string
 }
 
 export interface Period {
   id: string
+  name?: string
   condominiumId: string
   startDate: string
   endDate?: string
@@ -82,6 +98,10 @@ export interface Period {
   receiptPhoto2?: string
   createdAt: string
   updatedAt: string
+  readings?: Reading[]
+  _count?: {
+    readings?: number
+  }
 }
 
 export type PeriodStatus = 'OPEN' | 'PENDING_RECEIPT' | 'CALCULATING' | 'CLOSED'

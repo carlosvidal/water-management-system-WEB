@@ -150,8 +150,14 @@
                         {{ condominium.address }}
                       </p>
                       <div class="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                        <span>{{ condominium.blocks?.length || 0 }} bloques</span>
-                        <span>{{ condominium.totalUnits || 0 }} unidades</span>
+                        <span class="inline-flex items-center">
+                          <CubeIcon class="h-3 w-3 mr-1 text-gray-400" />
+                          {{ getBlocksCount(condominium) }} bloques
+                        </span>
+                        <span class="inline-flex items-center">
+                          <HomeIcon class="h-3 w-3 mr-1 text-gray-400" />
+                          {{ getUnitsCount(condominium) }} unidades
+                        </span>
                         <span class="flex items-center">
                           <div class="w-2 h-2 rounded-full mr-1" :class="condominium.isActive ? 'bg-green-400' : 'bg-red-400'"></div>
                           {{ condominium.isActive ? 'Activo' : 'Inactivo' }}
@@ -399,6 +405,7 @@ import {
   PlusIcon,
   UserPlusIcon,
   DocumentChartBarIcon,
+  CubeIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -452,10 +459,10 @@ const newUser = reactive({
 async function loadDashboardData() {
   try {
     await condominiumStore.fetchCondominiums()
-    
-    // Calculate stats
+
+    // Calculate stats using the helper functions
     stats.value.totalCondominiums = condominiumStore.list.length
-    stats.value.totalUnits = condominiumStore.list.reduce((total, c) => total + (c.totalUnits || 0), 0)
+    stats.value.totalUnits = condominiumStore.list.reduce((total, c) => total + getUnitsCount(c), 0)
     stats.value.activeUsers = 15 // Mock data
     stats.value.monthlyConsumption = 125000 // Mock data
   } catch (error) {
@@ -523,6 +530,42 @@ function formatDate(date: Date): string {
   } else {
     return `hace ${diffDays} días`
   }
+}
+
+function getBlocksCount(condominium: any): number {
+  // blocks array comes from API with nested units
+  if (condominium.blocks && Array.isArray(condominium.blocks)) {
+    return condominium.blocks.length
+  }
+  // Fallback to _count if available
+  if (condominium._count?.blocks) {
+    return condominium._count.blocks
+  }
+  return 0
+}
+
+function getUnitsCount(condominium: any): number {
+  // Calculate total units from blocks array
+  if (condominium.blocks && Array.isArray(condominium.blocks)) {
+    return condominium.blocks.reduce((total: number, block: any) => {
+      if (block.units && Array.isArray(block.units)) {
+        return total + block.units.length
+      }
+      if (block._count?.units) {
+        return total + block._count.units
+      }
+      return total
+    }, 0)
+  }
+  // Fallback to totalUnits if available
+  if (condominium.totalUnits) {
+    return condominium.totalUnits
+  }
+  // Fallback to _count if available
+  if (condominium._count?.units) {
+    return condominium._count.units
+  }
+  return 0
 }
 
 onMounted(() => {

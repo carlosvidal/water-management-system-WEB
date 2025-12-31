@@ -454,6 +454,66 @@ class ApiClient {
     const response = await this.instance.post(`/condominiums/${condominiumId}/users`, data)
     return response.data
   }
+
+  async updateCondominiumUser(condominiumId: string, userId: string, data: any) {
+    const response = await this.instance.put(`/condominiums/${condominiumId}/users/${userId}`, data)
+    return response.data
+  }
+
+  async deleteCondominiumUser(condominiumId: string, userId: string) {
+    const response = await this.instance.delete(`/condominiums/${condominiumId}/users/${userId}`)
+    return response.data
+  }
+
+  // Unit residents management (multiple residents per unit)
+  async getUnitResidents(condominiumId: string, unitId: string) {
+    const response = await this.instance.get(`/condominiums/${condominiumId}/units/${unitId}/residents`)
+    return response.data
+  }
+
+  async addResidentToUnit(condominiumId: string, unitId: string, data: any) {
+    const response = await this.instance.post(`/condominiums/${condominiumId}/units/${unitId}/residents`, data)
+    return response.data
+  }
+
+  async removeResidentFromUnit(condominiumId: string, unitId: string, residentId: string) {
+    const response = await this.instance.delete(`/condominiums/${condominiumId}/units/${unitId}/residents/${residentId}`)
+    return response.data
+  }
+
+  // Period additional operations
+  async resetPeriod(periodId: string) {
+    const response = await this.instance.put(`/periods/${periodId}/reset`)
+    return response.data
+  }
+
+  async validateAllReadings(periodId: string) {
+    const response = await this.instance.put(`/periods/${periodId}/readings/validate-all`)
+    return response.data
+  }
+
+  async savePeriodCalculations(periodId: string, data: any) {
+    const response = await this.instance.post(`/periods/${periodId}/calculations`, data)
+    return response.data
+  }
+
+  async deletePeriodCalculations(periodId: string) {
+    const response = await this.instance.delete(`/periods/${periodId}/calculations`)
+    return response.data
+  }
+
+  async getPreviousReadings(periodId: string) {
+    const response = await this.instance.get(`/periods/${periodId}/previous-readings`)
+    return response.data
+  }
+
+  // Global user management (Super Admin only)
+  async createUser(data: any) {
+    // NOTE: This endpoint may need to be implemented in the API
+    // For now, try to use the general users endpoint
+    const response = await this.instance.post('/users', data)
+    return response.data
+  }
 }
 
 export const apiClient = new ApiClient()

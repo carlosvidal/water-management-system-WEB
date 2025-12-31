@@ -297,6 +297,42 @@ export const useCondominiumStore = defineStore('condominium', () => {
     }
   }
 
+  async function updateUser(condominiumId: string, userId: string, data: any): Promise<any> {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await apiClient.updateCondominiumUser(condominiumId, userId, data)
+
+      // Refresh users list after updating
+      await fetchUsers(condominiumId)
+
+      return response
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al actualizar usuario'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function deleteUser(condominiumId: string, userId: string): Promise<void> {
+    try {
+      loading.value = true
+      error.value = null
+
+      await apiClient.deleteCondominiumUser(condominiumId, userId)
+
+      // Remove from local state
+      users.value = users.value.filter(u => u.userId !== userId)
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al eliminar usuario'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function clearError(): void {
     error.value = null
   }
@@ -347,6 +383,8 @@ export const useCondominiumStore = defineStore('condominium', () => {
     createPeriod,
     fetchUsers,
     createUser,
+    updateUser,
+    deleteUser,
     clearError,
     reset,
   }
