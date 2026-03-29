@@ -40,21 +40,32 @@ class ApiClient {
         return response
       },
       async (error: any) => {
+        const originalRequest = error.config
         const authStore = useAuthStore()
-        
-        if (error.response?.status === 401) {
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true
+
+          // Don't try to refresh on auth endpoints
+          if (originalRequest.url?.includes('/auth/login') ||
+              originalRequest.url?.includes('/auth/refresh')) {
+            return Promise.reject(error)
+          }
+
           // Try to refresh token
           try {
             await authStore.refreshTokenAction()
-            // Retry the original request
-            return this.instance.request(error.config)
+            // Update the header with the new token
+            originalRequest.headers.Authorization = `Bearer ${authStore.token}`
+            return this.instance.request(originalRequest)
           } catch (refreshError) {
             // Refresh failed, logout user
             authStore.logout()
             window.location.href = '/login'
+            return Promise.reject(refreshError)
           }
         }
-        
+
         return Promise.reject(error)
       }
     )
