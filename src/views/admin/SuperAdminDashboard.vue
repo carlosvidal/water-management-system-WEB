@@ -286,6 +286,59 @@
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
                 />
               </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Plan</label>
+                <select
+                  v-model="newCondominium.planId"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                >
+                  <option value="" disabled>Seleccionar plan</option>
+                  <option v-for="plan in plans" :key="plan.id" :value="plan.id">
+                    {{ plan.name }}
+                  </option>
+                </select>
+              </div>
+
+              <hr class="my-2" />
+              <h4 class="text-sm font-medium text-gray-900">Usuario Administrador</h4>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  v-model="newCondominium.adminUser.name"
+                  type="text"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  v-model="newCondominium.adminUser.email"
+                  type="email"
+                  required
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <input
+                  v-model="newCondominium.adminUser.password"
+                  type="password"
+                  required
+                  minlength="8"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Teléfono (opcional)</label>
+                <input
+                  v-model="newCondominium.adminUser.phone"
+                  type="text"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-water-500 focus:border-water-500 sm:text-sm"
+                />
+              </div>
             </div>
             <div class="flex justify-end space-x-3 mt-6">
               <button
@@ -441,11 +494,20 @@ const recentActivity = ref([
   },
 ])
 
+const plans = ref<any[]>([])
+
 const newCondominium = reactive({
   name: '',
   address: '',
   city: '',
   country: '',
+  planId: '',
+  adminUser: {
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+  },
 })
 
 const newUser = reactive({
@@ -459,6 +521,14 @@ const newUser = reactive({
 async function loadDashboardData() {
   try {
     await condominiumStore.fetchCondominiums()
+
+    // Load plans for the create form
+    try {
+      const plansData = await apiClient.getPlans()
+      plans.value = plansData.plans || plansData || []
+    } catch (e) {
+      console.error('Error loading plans:', e)
+    }
 
     // Calculate stats using the helper functions
     stats.value.totalCondominiums = condominiumStore.list.length
@@ -480,6 +550,8 @@ async function createCondominium() {
       address: '',
       city: '',
       country: '',
+      planId: '',
+      adminUser: { name: '', email: '', password: '', phone: '' },
     })
     
     showCreateCondominiumModal.value = false
